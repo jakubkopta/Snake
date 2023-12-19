@@ -8,6 +8,8 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
@@ -28,28 +30,36 @@ public class HelloApplication extends Application {
     public static final int BLOCK_SIZE = 20;
     public static final int MAX_WIDTH = 30 * BLOCK_SIZE;
     public static final int MAX_HEIGHT = 30 * BLOCK_SIZE;
+    public static final int ROWS = MAX_WIDTH/BLOCK_SIZE;
+    public static final int COLUMNS = ROWS;
 
     private Direction direction = Direction.RIGHT;
     private int score = 0;
     private int highScore = 0;
-    private Label scoreLabel = new Label("Score: 0");
+    private Label scoreLabel = new Label();
     private boolean moved = false;
     private boolean running = false;
     private final Timeline timeline = new Timeline();
     private ObservableList<Node> snake;
     private Stage stage;
+    private GraphicsContext gc;
+
 
     private Parent createContent() {
         Pane root = new Pane();
         root.setPrefSize(MAX_WIDTH, MAX_HEIGHT);
-        root.getChildren().add(scoreLabel);
+        Canvas canvas = new Canvas(MAX_WIDTH, MAX_HEIGHT);
+        root.getChildren().addAll(canvas,scoreLabel);
+        gc = canvas.getGraphicsContext2D();
         Group snakeBody = new Group();
         snake = snakeBody.getChildren();
+        drawScore();
 
         Rectangle food = new Rectangle(BLOCK_SIZE, BLOCK_SIZE);
         food.setFill(Color.RED);
         food.setTranslateX((int) (Math.random() * (MAX_WIDTH - BLOCK_SIZE)) / BLOCK_SIZE * BLOCK_SIZE);
         food.setTranslateY((int) (Math.random() * (MAX_HEIGHT - BLOCK_SIZE)) / BLOCK_SIZE * BLOCK_SIZE);
+        drawBackground(gc);
 
         KeyFrame frame = new KeyFrame(Duration.seconds(0.15), event -> {
            if (!running)
@@ -108,7 +118,7 @@ public class HelloApplication extends Application {
 
                snake.add(rect);
                score++;
-               scoreLabel.setText("Score: " + score);
+               drawScore();
            }
 
         });
@@ -138,7 +148,7 @@ public class HelloApplication extends Application {
         restartButton.setOnAction(e -> {
             gameOverStage.close();
             score = 0;
-            scoreLabel.setText("Score: " + score);
+            drawScore();
             startGame();
         });
 
@@ -209,6 +219,24 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
         startGame();
+    }
+
+    private void drawBackground(GraphicsContext gc) {
+        for (int i = 0; i < ROWS; i++) {
+            for (int j = 0; j < COLUMNS; j++) {
+                if ((i + j) % 2 == 0) {
+                    gc.setFill(Color.web("AAD751"));
+                } else {
+                    gc.setFill(Color.web("A2D149"));
+                }
+                gc.fillRect(i * BLOCK_SIZE, j * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            }
+        }
+    }
+
+    private void drawScore() {
+        scoreLabel.setStyle("-fx-font-size: 30");
+        scoreLabel.setText("Score: " + score);
     }
 
     public static void main(String[] args) {
